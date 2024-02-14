@@ -15,7 +15,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 
 		if len(splittedPath) != 5 {
 			w.WriteHeader(404)
-			fmt.Println(fmt.Sprintf("%s %d", r.URL.Path, http.StatusNotFound))
+			fmt.Printf(fmt.Sprintf("%s %d\n", r.URL.Path, http.StatusNotFound))
 
 			w.Write([]byte("not 4"))
 			return
@@ -23,12 +23,12 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 
 		_, err := strconv.Atoi(splittedPath[4])
 		if err != nil {
-			fmt.Println(fmt.Sprintf("%s %d", r.URL.Path, http.StatusNotFound))
+			fmt.Printf(fmt.Sprintf("%s %d\n", r.URL.Path, http.StatusNotFound))
 			w.Write([]byte("not int"))
 
 			return
 		}
-		fmt.Println(fmt.Sprintf("%s %d", r.URL.Path, http.StatusAccepted))
+		fmt.Printf(fmt.Sprintf("%s %d\n", r.URL.Path, http.StatusAccepted))
 		w.WriteHeader(200)
 	default:
 		w.WriteHeader(405)
