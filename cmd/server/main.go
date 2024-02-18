@@ -10,16 +10,15 @@ import (
 )
 
 func main() {
-	http.Handle("/update/counter/pollcount", http.HandlerFunc(internal.PostHandler))
+	memStorage := internal.NewMemStorage()
+
+	http.Handle("/update/counter/pollcount", internal.HandlerWrapper(memStorage, internal.PostHandler))
 	for _, metricType := range internal.GetMetricNames() {
 		metrics := fmt.Sprintf("/update/gauge/%s/", strings.ToLower(metricType))
-		http.Handle(
-			metrics,
-			http.HandlerFunc(internal.PostHandler))
-
+		http.Handle(metrics, internal.HandlerWrapper(memStorage, internal.PostHandler))
 	}
 	server := &http.Server{
-		Addr: "127.0.0.1:8081",
+		Addr: "127.0.0.1:8080",
 	}
 	// вызов ListenAndServe — блокирующий, последний в программе
 	// возникающие ошибки на серверных машинах пишут в системный лог,

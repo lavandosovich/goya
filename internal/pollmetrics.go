@@ -11,34 +11,34 @@ func getMetrics(pollCount Counter) *Metrics {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	metrics := &Metrics{
-		Alloc:         Gauge(int(m.Alloc)),
-		BuckHashSys:   Gauge(int(m.BuckHashSys)),
-		Frees:         Gauge(int(m.Frees)),
-		GCCPUFraction: Gauge(int(m.GCCPUFraction)),
-		GCSys:         Gauge(int(m.GCSys)),
-		HeapAlloc:     Gauge(int(m.HeapAlloc)),
-		HeapIdle:      Gauge(int(m.HeapIdle)),
-		HeapInuse:     Gauge(int(m.HeapInuse)),
-		HeapObjects:   Gauge(int(m.HeapObjects)),
-		HeapReleased:  Gauge(int(m.HeapReleased)),
-		HeapSys:       Gauge(int(m.HeapSys)),
-		LastGC:        Gauge(int(m.LastGC)),
-		Lookups:       Gauge(int(m.Lookups)),
-		MCacheInuse:   Gauge(int(m.MCacheInuse)),
-		MCacheSys:     Gauge(int(m.MCacheSys)),
-		MSpanInuse:    Gauge(int(m.MSpanInuse)),
-		MSpanSys:      Gauge(int(m.MSpanSys)),
-		Mallocs:       Gauge(int(m.Mallocs)),
-		NextGC:        Gauge(int(m.NextGC)),
-		NumForcedGC:   Gauge(int(m.NumForcedGC)),
-		NumGC:         Gauge(int(m.NumGC)),
-		OtherSys:      Gauge(int(m.OtherSys)),
+		Alloc:         Gauge(float64(m.Alloc)),
+		BuckHashSys:   Gauge(float64(m.BuckHashSys)),
+		Frees:         Gauge(float64(m.Frees)),
+		GCCPUFraction: Gauge(m.GCCPUFraction),
+		GCSys:         Gauge(float64(m.GCSys)),
+		HeapAlloc:     Gauge(float64(m.HeapAlloc)),
+		HeapIdle:      Gauge(float64(m.HeapIdle)),
+		HeapInuse:     Gauge(float64(m.HeapInuse)),
+		HeapObjects:   Gauge(float64(m.HeapObjects)),
+		HeapReleased:  Gauge(float64(m.HeapReleased)),
+		HeapSys:       Gauge(float64(m.HeapSys)),
+		LastGC:        Gauge(float64(m.LastGC)),
+		Lookups:       Gauge(float64(m.Lookups)),
+		MCacheInuse:   Gauge(float64(m.MCacheInuse)),
+		MCacheSys:     Gauge(float64(m.MCacheSys)),
+		MSpanInuse:    Gauge(float64(m.MSpanInuse)),
+		MSpanSys:      Gauge(float64(m.MSpanSys)),
+		Mallocs:       Gauge(float64(m.Mallocs)),
+		NextGC:        Gauge(float64(m.NextGC)),
+		NumForcedGC:   Gauge(float64(m.NumForcedGC)),
+		NumGC:         Gauge(float64(m.NumGC)),
+		OtherSys:      Gauge(float64(m.OtherSys)),
 
-		PauseTotalNs: Gauge(int(m.PauseTotalNs)),
-		StackInuse:   Gauge(int(m.StackInuse)),
-		StackSys:     Gauge(int(m.StackSys)),
-		Sys:          Gauge(int(m.Sys)),
-		TotalAlloc:   Gauge(int(m.TotalAlloc)),
+		PauseTotalNs: Gauge(float64(m.PauseTotalNs)),
+		StackInuse:   Gauge(float64(m.StackInuse)),
+		StackSys:     Gauge(float64(m.StackSys)),
+		Sys:          Gauge(float64(m.Sys)),
+		TotalAlloc:   Gauge(float64(m.TotalAlloc)),
 		PollCount:    pollCount,
 		RandomValue:  Gauge(rand.Int63n(1_000_000_000)),
 	}
@@ -59,13 +59,12 @@ func PollMetrics(pollDuration, reportDuration time.Duration, reporterFunc Metric
 			if neededMetrics == nil {
 				continue
 			}
-			responses, errors := reporterFunc(neededMetrics, address)
+			_, errors := reporterFunc(neededMetrics, address)
 
 			if errors != nil {
 				fmt.Println(errors)
 				panic("error on reporting metrics")
 			}
-			fmt.Println(responses)
 			fmt.Println("From goroutine", int(tick.Sub(startTime).Seconds()))
 		}
 	}()
@@ -74,8 +73,6 @@ func PollMetrics(pollDuration, reportDuration time.Duration, reporterFunc Metric
 		tick := <-pollTicker.C
 		pollCount += 1
 		neededMetrics = getMetrics(pollCount)
-		fmt.Println("From main routine")
-		fmt.Println(neededMetrics)
 		fmt.Println(int(tick.Sub(startTime).Seconds()))
 	}
 }

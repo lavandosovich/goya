@@ -40,6 +40,38 @@ type Metrics struct {
 	RandomValue   Gauge
 }
 
+type MemStorage struct {
+	storage map[string]any
+}
+
+type IMemStorage interface {
+	SetMetric(metricName string, metricValue any)
+	GetMetric(metricName string) any
+}
+
+func NewMemStorage() *MemStorage {
+	return &MemStorage{
+		storage: make(map[string]any),
+	}
+}
+
+func (memStorage MemStorage) SetMetric(metricName string, metricValue any) {
+	memStorage.storage[metricName] = metricValue
+}
+
+func (memStorage MemStorage) GetMetric(metricName string) any {
+	return memStorage.storage[metricName]
+}
+
+func HandlerWrapper(
+	storage *MemStorage,
+	function func(http.ResponseWriter, *http.Request, *MemStorage)) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		function(w, r, storage)
+	}
+}
+
 type MetricsReporter func(metrics *Metrics, address string) ([]*http.Response, []error)
 
 func GetMetricNames() []string {
@@ -55,11 +87,4 @@ func GetMetricNames() []string {
 	}
 
 	return fields
-}
-
-func GetMerticTypesNames() []string {
-	return []string{
-		reflect.Indirect(reflect.ValueOf(Gauge(1))).Type().Name(),
-		reflect.Indirect(reflect.ValueOf(Counter(1))).Type().Name(),
-	}
 }

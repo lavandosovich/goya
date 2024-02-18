@@ -7,30 +7,40 @@ import (
 	"strings"
 )
 
-func PostHandler(w http.ResponseWriter, r *http.Request) {
+func PostHandler(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 	switch r.Method {
 	case http.MethodPost:
 		splittedPath := strings.Split(r.URL.Path, "/")
 		w.Header().Set("content-type", "application/text")
 
 		if len(splittedPath) != 5 {
-			w.WriteHeader(404)
-			fmt.Printf(fmt.Sprintf("%s %d\n", r.URL.Path, http.StatusNotFound))
-
-			w.Write([]byte("not 4"))
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			fmt.Printf(fmt.Sprintf("%s %d\n", r.URL.Path, http.StatusMethodNotAllowed))
+			w.Write([]byte("fail"))
 			return
 		}
 
-		_, err := strconv.Atoi(splittedPath[4])
-		if err != nil {
-			fmt.Printf(fmt.Sprintf("%s %d\n", r.URL.Path, http.StatusNotFound))
-			w.Write([]byte("not int"))
-
-			return
+		if splittedPath[2] == "counter" {
+			value, err := strconv.ParseInt(splittedPath[4], 10, 64)
+			if err != nil {
+				w.WriteHeader(http.StatusMethodNotAllowed)
+				w.Write([]byte("wrong type"))
+				return
+			}
+			(*storage).SetMetric(splittedPath[3], Counter(value))
+		} else {
+			s, err := strconv.ParseFloat(splittedPath[4], 64)
+			if err != nil {
+				w.WriteHeader(http.StatusMethodNotAllowed)
+				w.Write([]byte("wrong type"))
+				return
+			}
+			(*storage).SetMetric(splittedPath[3], Gauge(s))
 		}
 		fmt.Printf(fmt.Sprintf("%s %d\n", r.URL.Path, http.StatusAccepted))
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
 	default:
-		w.WriteHeader(405)
+		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
