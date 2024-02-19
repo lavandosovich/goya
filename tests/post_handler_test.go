@@ -1,8 +1,8 @@
-package internal
+package tests
 
 import (
+	"github.com/lavandosovich/goya/internal"
 	"github.com/stretchr/testify/assert"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,13 +16,11 @@ func TestPostHandler(t *testing.T) {
 		metricValue any
 		metricName  string
 	}
-	// создаём массив тестов: имя и желаемый результат
 	tests := []struct {
 		name    string
 		want    want
 		request string
 	}{
-		// определяем все тесты
 		{
 			name:    "positive test #1",
 			request: "/update/gauge/nextgc/124124",
@@ -30,7 +28,7 @@ func TestPostHandler(t *testing.T) {
 				statusCode:  http.StatusOK,
 				response:    "ok",
 				contentType: "application/text",
-				metricValue: Gauge(124124),
+				metricValue: internal.Gauge(124124),
 				metricName:  "nextgc",
 			},
 		},
@@ -41,7 +39,7 @@ func TestPostHandler(t *testing.T) {
 				statusCode:  http.StatusOK,
 				response:    "ok",
 				contentType: "application/text",
-				metricValue: Counter(12),
+				metricValue: internal.Counter(12),
 				metricName:  "pollcount",
 			},
 		},
@@ -52,7 +50,7 @@ func TestPostHandler(t *testing.T) {
 				statusCode:  http.StatusOK,
 				response:    "ok",
 				contentType: "application/text",
-				metricValue: Counter(100),
+				metricValue: internal.Counter(100),
 				metricName:  "testCounter",
 			},
 		},
@@ -63,7 +61,7 @@ func TestPostHandler(t *testing.T) {
 				statusCode:  http.StatusOK,
 				response:    "ok",
 				contentType: "application/text",
-				metricValue: Gauge(101),
+				metricValue: internal.Gauge(101),
 				metricName:  "testGauge",
 			},
 		},
@@ -71,9 +69,9 @@ func TestPostHandler(t *testing.T) {
 			name:    "negative test #1",
 			request: "/update/counter/124124",
 			want: want{
-				statusCode:  http.StatusNotFound,
-				response:    "fail",
-				contentType: "application/text",
+				statusCode:  http.StatusMethodNotAllowed,
+				response:    "",
+				contentType: "",
 				metricValue: nil,
 			},
 		},
@@ -103,39 +101,38 @@ func TestPostHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusNotImplemented,
 				response:    "fail",
-				contentType: "application/text",
+				contentType: "text/plain; charset=utf-8",
 				metricValue: nil,
 			},
 		},
 	}
 	for _, tt := range tests {
-		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodPost, tt.request, nil)
-			memStorage := NewMemStorage()
+			memStorage := internal.NewMemStorage()
+
+			ts := httptest.NewServer(internal.InitChiRouter(memStorage))
+			defer ts.Close()
+
+			statusCode, body := testRequest(t, ts, http.MethodPost, tt.request, func(response *http.Response) {
+				assert.Equal(t, response.Header.Get("Content-Type"), tt.want.contentType)
+			})
+			assert.Equal(t, tt.want.statusCode, statusCode)
+			assert.Equal(t, tt.want.response, body)
+
+			//request := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			// создаём новый Recorder
-			w := httptest.NewRecorder()
-			// определяем хендлер
-			h := HandlerWrapper(memStorage, PostHandler)
+			//w := httptest.NewRecorder()
 
-			// запускаем сервер
-			h.ServeHTTP(w, request)
-			res := w.Result()
-
-			// проверяем код ответа
-			assert.Equal(t, tt.want.statusCode, res.StatusCode)
-
-			// получаем и проверяем тело запроса
-			defer res.Body.Close()
-			resBody, err := io.ReadAll(res.Body)
-			if err != nil {
-				t.Fatal(err)
+			switch tt.want.metricValue.(type) {
+			case internal.Gauge:
+				assert.Equal(t, tt.want.metricValue, memStorage.GetGaugeMetric(tt.want.metricName))
+			case internal.Counter:
+				assert.Equal(t, tt.want.metricValue, memStorage.GetCounterMetric(tt.want.metricName))
+			default:
+				if tt.want.metricValue != nil {
+					assert.NotNil(t, nil)
+				}
 			}
-
-			// заголовок ответа
-			assert.Equal(t, tt.want.response, string(resBody))
-			assert.Equal(t, res.Header.Get("Content-Type"), tt.want.contentType)
-			assert.Equal(t, tt.want.metricValue, memStorage.GetMetric(tt.want.metricName))
 		})
 	}
 }

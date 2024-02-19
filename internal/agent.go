@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"strings"
 )
 
 func POSTMetrics(metrics *Metrics, address string) []error {
@@ -36,7 +35,7 @@ func POSTMetrics(metrics *Metrics, address string) []error {
 			fmt.Sprintf(
 				"%s/update/gauge/%s/%v",
 				address,
-				strings.ToLower(typeOfS.Field(i).Name),
+				typeOfS.Field(i).Name,
 				v.Field(i).Interface(),
 			),
 			nil)

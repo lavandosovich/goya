@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func getMetrics(pollCount Counter) *Metrics {
+func GetMetrics(pollCount Counter) *Metrics {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	metrics := &Metrics{
@@ -73,7 +73,7 @@ func PollMetrics(pollDuration, reportDuration time.Duration, reporterFunc Metric
 	for i := 0; ; i++ {
 		tick := <-pollTicker.C
 		pollCount += 1
-		neededMetrics = getMetrics(pollCount)
+		neededMetrics = GetMetrics(pollCount)
 		fmt.Println(int(tick.Sub(startTime).Seconds()))
 	}
 }
