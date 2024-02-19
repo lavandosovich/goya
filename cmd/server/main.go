@@ -12,7 +12,7 @@ import (
 func main() {
 	memStorage := internal.NewMemStorage()
 
-	http.Handle("/update/counter/pollcount", internal.HandlerWrapper(memStorage, internal.PostHandler))
+	http.Handle("/update/counter/PollCount", internal.HandlerWrapper(memStorage, internal.PostHandler))
 	for _, metricType := range internal.GetMetricNames() {
 		metrics := fmt.Sprintf("/update/gauge/%s/", strings.ToLower(metricType))
 		http.Handle(metrics, internal.HandlerWrapper(memStorage, internal.PostHandler))

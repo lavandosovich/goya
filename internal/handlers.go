@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -10,6 +11,7 @@ import (
 func PostHandler(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 	switch r.Method {
 	case http.MethodPost:
+		metricsTypes := []string{"counter", "gauge"}
 		splittedPath := strings.Split(r.URL.Path, "/")
 		w.Header().Set("content-type", "application/text")
 
@@ -20,10 +22,16 @@ func PostHandler(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 			return
 		}
 
+		if !slices.Contains(metricsTypes, splittedPath[2]) {
+			w.WriteHeader(http.StatusNotImplemented)
+			w.Write([]byte("fail"))
+			return
+		}
+
 		if splittedPath[2] == "counter" {
 			value, err := strconv.ParseInt(splittedPath[4], 10, 64)
 			if err != nil {
-				w.WriteHeader(http.StatusMethodNotAllowed)
+				w.WriteHeader(http.StatusBadRequest)
 				w.Write([]byte("wrong type"))
 				return
 			}
@@ -31,7 +39,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 		} else {
 			s, err := strconv.ParseFloat(splittedPath[4], 64)
 			if err != nil {
-				w.WriteHeader(http.StatusMethodNotAllowed)
+				w.WriteHeader(http.StatusBadRequest)
 				w.Write([]byte("wrong type"))
 				return
 			}
