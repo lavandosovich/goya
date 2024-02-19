@@ -11,14 +11,18 @@ import (
 func PostHandler(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 	switch r.Method {
 	case http.MethodPost:
-		fmt.Println(r.URL.Path)
 		metricsTypes := []string{"counter", "gauge"}
 		splittedPath := strings.Split(r.URL.Path, "/")
 		w.Header().Set("content-type", "application/text")
 
+		if splittedPath[1] != "update" {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("fail"))
+			return
+		}
 		if len(splittedPath) != 5 {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			fmt.Printf(fmt.Sprintf("%s %d\n", r.URL.Path, http.StatusMethodNotAllowed))
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Printf(fmt.Sprintf("%s %d\n", r.URL.Path, http.StatusNotFound))
 			w.Write([]byte("fail"))
 			return
 		}

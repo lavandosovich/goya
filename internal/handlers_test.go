@@ -71,7 +71,7 @@ func TestPostHandler(t *testing.T) {
 			name:    "negative test #1",
 			request: "/update/counter/124124",
 			want: want{
-				statusCode:  http.StatusMethodNotAllowed,
+				statusCode:  http.StatusNotFound,
 				response:    "fail",
 				contentType: "application/text",
 				metricValue: nil,

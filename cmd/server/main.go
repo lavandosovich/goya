@@ -9,7 +9,7 @@ import (
 func main() {
 	memStorage := internal.NewMemStorage()
 
-	http.Handle("/", internal.HandlerWrapper(memStorage, internal.PostHandler))
+	http.Handle("/update/", internal.HandlerWrapper(memStorage, internal.PostHandler))
 
 	server := &http.Server{
 		Addr:    "127.0.0.1:8080",
