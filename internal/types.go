@@ -2,7 +2,6 @@ package internal
 
 import (
 	"net/http"
-	"reflect"
 )
 
 type Gauge float64
@@ -73,18 +72,3 @@ func HandlerWrapper(
 }
 
 type MetricsReporter func(metrics *Metrics, address string) ([]*http.Response, []error)
-
-func GetMetricNames() []string {
-	var fields []string
-	val := reflect.Indirect(reflect.ValueOf(Metrics{})).Type()
-
-	for i := 0; i < val.NumField(); i++ {
-		name := val.Field(i).Name
-		if name == "PollCount" {
-			continue
-		}
-		fields = append(fields, name)
-	}
-
-	return fields
-}
