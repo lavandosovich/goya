@@ -54,11 +54,9 @@ func POSTMetrics(metrics *Metrics, address string) ([]*http.Response, []error) {
 			if err != nil {
 				requestErrors = append(requestErrors, err)
 			}
+			_ = response.Body.Close()
 			responses = append(responses, response)
 		}(request)
-	}
-	for _, response := range responses {
-		_ = response.Body.Close()
 	}
 	return responses, requestErrors
 }

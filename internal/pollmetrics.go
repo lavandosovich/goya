@@ -59,12 +59,17 @@ func PollMetrics(pollDuration, reportDuration time.Duration, reporterFunc Metric
 			if neededMetrics == nil {
 				continue
 			}
-			_, errors := reporterFunc(neededMetrics, address)
+			responses, errors := reporterFunc(neededMetrics, address)
 
 			if errors != nil {
 				fmt.Println(errors)
 				panic("error on reporting metrics")
 			}
+
+			for _, response := range responses {
+				_ = response.Body.Close()
+			}
+
 			fmt.Println("From goroutine", int(tick.Sub(startTime).Seconds()))
 		}
 	}()
