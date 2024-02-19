@@ -50,10 +50,11 @@ func POSTMetrics(metrics *Metrics, address string) []error {
 	for _, request := range requests {
 		go func(request *http.Request) {
 			response, err := client.Do(request)
-			defer response.Body.Close()
 			if err != nil {
 				requestErrors = append(requestErrors, err)
 			}
+			defer response.Body.Close()
+
 		}(request)
 	}
 	return requestErrors

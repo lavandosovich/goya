@@ -71,4 +71,4 @@ func HandlerWrapper(
 	}
 }
 
-type MetricsReporter func(metrics *Metrics, address string) ([]*http.Response, []error)
+type MetricsReporter func(metrics *Metrics, address string) []error
