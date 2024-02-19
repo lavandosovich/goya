@@ -7,10 +7,9 @@ import (
 	"strings"
 )
 
-func POSTMetrics(metrics *Metrics, address string) ([]*http.Response, []error) {
+func POSTMetrics(metrics *Metrics, address string) []error {
 	var requests []*http.Request
 	var requestErrors []error
-	var responses []*http.Response
 
 	client := &http.Client{}
 
@@ -19,7 +18,7 @@ func POSTMetrics(metrics *Metrics, address string) ([]*http.Response, []error) {
 		fmt.Sprintf("%s/update/counter/pollcount/%d", address, metrics.PollCount),
 		nil)
 	if err != nil {
-		return nil, append(requestErrors, err)
+		return append(requestErrors, err)
 	}
 	request.Header.Add("Content-Type", "text/plain")
 
@@ -42,7 +41,7 @@ func POSTMetrics(metrics *Metrics, address string) ([]*http.Response, []error) {
 			),
 			nil)
 		if err != nil {
-			return nil, append(requestErrors, err)
+			return append(requestErrors, err)
 		}
 		request.Header.Add("Content-Type", "text/plain")
 		requests = append(requests, request)
@@ -51,12 +50,11 @@ func POSTMetrics(metrics *Metrics, address string) ([]*http.Response, []error) {
 	for _, request := range requests {
 		go func(request *http.Request) {
 			response, err := client.Do(request)
+			defer response.Body.Close()
 			if err != nil {
 				requestErrors = append(requestErrors, err)
 			}
-			_ = response.Body.Close()
-			responses = append(responses, response)
 		}(request)
 	}
-	return responses, requestErrors
+	return requestErrors
 }

@@ -23,7 +23,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 		if len(splittedPath) != 5 {
 			w.WriteHeader(http.StatusNotFound)
 			log := fmt.Sprintf("%s %d\n", r.URL.Path, http.StatusNotFound)
-			fmt.Printf(log)
+			fmt.Print(log)
 			w.Write([]byte("fail"))
 			return
 		}
@@ -52,7 +52,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 			(*storage).SetMetric(splittedPath[3], Gauge(s))
 		}
 		log := fmt.Sprintf("%s %d\n", r.URL.Path, http.StatusAccepted)
-		fmt.Printf(log)
+		fmt.Print(log)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	default:
