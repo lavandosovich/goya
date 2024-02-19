@@ -11,6 +11,7 @@ import (
 func PostHandler(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 	switch r.Method {
 	case http.MethodPost:
+		fmt.Println(r.URL.Path)
 		metricsTypes := []string{"counter", "gauge"}
 		splittedPath := strings.Split(r.URL.Path, "/")
 		w.Header().Set("content-type", "application/text")
