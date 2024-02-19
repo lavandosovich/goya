@@ -25,7 +25,7 @@ func TestGetHandler(t *testing.T) {
 	}{
 		{
 			name:    "positive test #1",
-			request: "/update/gauge/nextgc",
+			request: "/value/gauge/nextgc",
 			want: want{
 				statusCode:       http.StatusOK,
 				response:         fmt.Sprintf("%f", internal.Gauge(124124)),
@@ -36,7 +36,7 @@ func TestGetHandler(t *testing.T) {
 		},
 		{
 			name:    "positive test #2",
-			request: "/update/counter/pollcount",
+			request: "/value/counter/pollcount",
 			want: want{
 				statusCode:         http.StatusOK,
 				response:           fmt.Sprintf("%d", internal.Counter(12)),
@@ -47,7 +47,7 @@ func TestGetHandler(t *testing.T) {
 		},
 		{
 			name:    "positive test from CI #3",
-			request: "/update/counter/testCounter",
+			request: "/value/counter/testCounter",
 			want: want{
 				statusCode:         http.StatusOK,
 				response:           fmt.Sprintf("%d", internal.Counter(100)),
@@ -58,7 +58,7 @@ func TestGetHandler(t *testing.T) {
 		},
 		{
 			name:    "positive empty test #1",
-			request: "/update/celcius/124124",
+			request: "/value/celcius/124124",
 			want: want{
 				statusCode:  http.StatusNotImplemented,
 				response:    "fail",

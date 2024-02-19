@@ -92,7 +92,7 @@ func (memStorage MemStorage) GetGaugeMetric(metricName string) Gauge {
 	return memStorage.gaugeStorage[metricName]
 }
 
-func (memStorage MemStorage) ReduceMetricsToHtml() *bytes.Buffer {
+func (memStorage MemStorage) ReduceMetricsToHTML() *bytes.Buffer {
 	var htmlBody bytes.Buffer
 	for k, v := range memStorage.gaugeStorage {
 		htmlBody.WriteString(fmt.Sprintf("<div>%s: %f</div>\n", k, v))

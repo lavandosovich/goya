@@ -27,7 +27,7 @@ func MetricTypeMiddleware(next http.Handler) http.Handler {
 func RootHandler(w http.ResponseWriter, _ *http.Request, storage *MemStorage) {
 	w.Header().Set("content-type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write(storage.ReduceMetricsToHtml().Bytes())
+	w.Write(storage.ReduceMetricsToHTML().Bytes())
 }
 
 func GetHandler(w http.ResponseWriter, r *http.Request, storage *MemStorage) {

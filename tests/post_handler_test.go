@@ -69,9 +69,9 @@ func TestPostHandler(t *testing.T) {
 			name:    "negative test #1",
 			request: "/update/counter/124124",
 			want: want{
-				statusCode:  http.StatusMethodNotAllowed,
-				response:    "",
-				contentType: "",
+				statusCode:  http.StatusNotFound,
+				response:    "404 page not found\n",
+				contentType: "text/plain; charset=utf-8",
 				metricValue: nil,
 			},
 		},

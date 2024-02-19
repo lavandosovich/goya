@@ -17,6 +17,12 @@ func InitChiRouter(memStorage *MemStorage) chi.Router {
 		func(r chi.Router) {
 			r.Use(MetricTypeMiddleware)
 			r.Post("/{metricValue}", HandlerWrapper(memStorage, PostHandler))
+		},
+	)
+	r.Route(
+		"/value/{metricType}/{metricName}",
+		func(r chi.Router) {
+			r.Use(MetricTypeMiddleware)
 			r.Get("/", HandlerWrapper(memStorage, GetHandler))
 		},
 	)
