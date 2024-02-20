@@ -138,10 +138,7 @@ func TestGetHandlerWithGaugeAfterPost(t *testing.T) {
 			postRequest: []string{"/update/gauge/nextgc/124124.123"},
 			want: want{
 				statusCode: http.StatusOK,
-				response:   strconv.FormatFloat(float64(internal.Gauge(124124.123)), 'f', -1, 64),
-
-				gaugeMetricValue: internal.Gauge(124124.123),
-				metricName:       "nextgc",
+				metricName: "nextgc",
 			},
 		},
 		{
@@ -158,7 +155,6 @@ func TestGetHandlerWithGaugeAfterPost(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		var acc = internal.Gauge(0.0)
 		t.Run(tt.name, func(t *testing.T) {
 			memStorage := internal.NewMemStorage()
 
@@ -170,14 +166,10 @@ func TestGetHandlerWithGaugeAfterPost(t *testing.T) {
 				})
 				assert.Equal(t, tt.want.statusCode, statusCode)
 				reqPathArr := strings.Split(reqPath, "/")
-
-				g, _ := strconv.ParseFloat(reqPathArr[len(reqPathArr)-1], 64)
-				acc += internal.Gauge(g)
-
 				statusCode, body := testRequest(t, ts, http.MethodGet, tt.request, func(_ *http.Response) {
 				})
 				assert.Equal(t, tt.want.statusCode, statusCode)
-				assert.Equal(t, strings.TrimRight(fmt.Sprintf("%f", acc), "0"), body)
+				assert.Equal(t, strings.TrimRight(reqPathArr[len(reqPathArr)-1], "0"), body)
 			}
 		})
 	}

@@ -95,7 +95,7 @@ func (memStorage *MemStorage) GetCounterMetric(metricName string) (Counter, bool
 func (memStorage *MemStorage) SetGaugeMetric(metricName string, metricValue Gauge) {
 	memStorage.mxGauge.Lock()
 	defer memStorage.mxGauge.Unlock()
-	memStorage.gaugeStorage[metricName] += metricValue
+	memStorage.gaugeStorage[metricName] = metricValue
 }
 
 func (memStorage *MemStorage) GetGaugeMetric(metricName string) (Gauge, bool) {
