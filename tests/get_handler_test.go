@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 )
 
@@ -27,8 +28,9 @@ func TestGetHandler(t *testing.T) {
 			name:    "positive test #1",
 			request: "/value/gauge/nextgc",
 			want: want{
-				statusCode:       http.StatusOK,
-				response:         fmt.Sprintf("%.3f", internal.Gauge(124124.123333)),
+				statusCode: http.StatusOK,
+				response:   strconv.FormatFloat(float64(internal.Gauge(124124.123333)), 'f', -1, 64),
+
 				contentType:      "text/plain; charset=utf-8",
 				gaugeMetricValue: internal.Gauge(124124.123333),
 				metricName:       "nextgc",
@@ -62,6 +64,16 @@ func TestGetHandler(t *testing.T) {
 			want: want{
 				statusCode:  http.StatusNotImplemented,
 				response:    "fail",
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			name:    "positive empty test #2",
+			request: "/value/gauge/testUnknown104",
+			want: want{
+				statusCode: http.StatusNotFound,
+				response:   "0",
+
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
@@ -122,8 +134,9 @@ func TestGetHandlerAfterPost(t *testing.T) {
 			request:     "/value/gauge/nextgc",
 			postRequest: []string{"/update/gauge/nextgc/124124.123"},
 			want: want{
-				statusCode:       http.StatusOK,
-				response:         fmt.Sprintf("%.3f", internal.Gauge(124124.123)),
+				statusCode: http.StatusOK,
+				response:   strconv.FormatFloat(float64(internal.Gauge(124124.123)), 'f', -1, 64),
+
 				gaugeMetricValue: internal.Gauge(124124.123),
 				metricName:       "nextgc",
 			},
@@ -137,8 +150,9 @@ func TestGetHandlerAfterPost(t *testing.T) {
 				"/update/gauge/nextgc/1.123",
 			},
 			want: want{
-				statusCode:       http.StatusOK,
-				response:         fmt.Sprintf("%.3f", internal.Gauge(1.123)),
+				statusCode: http.StatusOK,
+				response:   strconv.FormatFloat(float64(internal.Gauge(1.123)), 'f', -1, 64),
+
 				gaugeMetricValue: internal.Gauge(1.123),
 				metricName:       "nextgc",
 			},
@@ -153,13 +167,11 @@ func TestGetHandlerAfterPost(t *testing.T) {
 
 			for _, reqPath := range tt.postRequest {
 				statusCode, _ := testRequest(t, ts, http.MethodPost, reqPath, func(_ *http.Response) {
-					return
 				})
 				assert.Equal(t, tt.want.statusCode, statusCode)
 			}
 
 			statusCode, body := testRequest(t, ts, http.MethodGet, tt.request, func(_ *http.Response) {
-				return
 			})
 			assert.Equal(t, tt.want.statusCode, statusCode)
 			assert.Equal(t, tt.want.response, body)
