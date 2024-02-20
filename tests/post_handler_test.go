@@ -122,12 +122,13 @@ func TestPostHandler(t *testing.T) {
 			//request := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			// создаём новый Recorder
 			//w := httptest.NewRecorder()
-
 			switch tt.want.metricValue.(type) {
 			case internal.Gauge:
-				assert.Equal(t, tt.want.metricValue, memStorage.GetGaugeMetric(tt.want.metricName))
+				metric, _ := memStorage.GetGaugeMetric(tt.want.metricName)
+				assert.Equal(t, tt.want.metricValue, metric)
 			case internal.Counter:
-				assert.Equal(t, tt.want.metricValue, memStorage.GetCounterMetric(tt.want.metricName))
+				metric, _ := memStorage.GetCounterMetric(tt.want.metricName)
+				assert.Equal(t, tt.want.metricValue, metric)
 			default:
 				if tt.want.metricValue != nil {
 					assert.NotNil(t, nil)

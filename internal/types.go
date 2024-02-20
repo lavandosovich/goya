@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"sync"
 )
 
 type metricKey string
@@ -55,6 +56,8 @@ type Metrics struct {
 type MemStorage struct {
 	counterStorage map[string]Counter
 	gaugeStorage   map[string]Gauge
+	mxCounter      sync.RWMutex
+	mxGauge        sync.RWMutex
 }
 
 type IMemStorage interface {
@@ -76,30 +79,44 @@ func NewMemStorage() *MemStorage {
 	}
 }
 
-func (memStorage MemStorage) SetCounterMetric(metricName string, metricValue Counter) {
+func (memStorage *MemStorage) SetCounterMetric(metricName string, metricValue Counter) {
+	memStorage.mxCounter.Lock()
+	defer memStorage.mxCounter.Unlock()
 	memStorage.counterStorage[metricName] = metricValue
 }
 
-func (memStorage MemStorage) GetCounterMetric(metricName string) Counter {
-	return memStorage.counterStorage[metricName]
+func (memStorage *MemStorage) GetCounterMetric(metricName string) (Counter, bool) {
+	memStorage.mxCounter.RLock()
+	defer memStorage.mxCounter.RUnlock()
+	metric, ok := memStorage.counterStorage[metricName]
+	return metric, ok
 }
 
-func (memStorage MemStorage) SetGaugeMetric(metricName string, metricValue Gauge) {
+func (memStorage *MemStorage) SetGaugeMetric(metricName string, metricValue Gauge) {
+	memStorage.mxGauge.Lock()
+	defer memStorage.mxGauge.Unlock()
 	memStorage.gaugeStorage[metricName] = metricValue
 }
 
-func (memStorage MemStorage) GetGaugeMetric(metricName string) Gauge {
-	return memStorage.gaugeStorage[metricName]
+func (memStorage *MemStorage) GetGaugeMetric(metricName string) (Gauge, bool) {
+	memStorage.mxGauge.RLock()
+	defer memStorage.mxGauge.RUnlock()
+	metric, ok := memStorage.gaugeStorage[metricName]
+	return metric, ok
 }
 
-func (memStorage MemStorage) ReduceMetricsToHTML() *bytes.Buffer {
+func (memStorage *MemStorage) ReduceMetricsToHTML() *bytes.Buffer {
 	var htmlBody bytes.Buffer
+	memStorage.mxGauge.RLock()
 	for k, v := range memStorage.gaugeStorage {
 		htmlBody.WriteString(fmt.Sprintf("<div>%s: %f</div>\n", k, v))
 	}
+	memStorage.mxGauge.RUnlock()
+	memStorage.mxCounter.RLock()
 	for k, v := range memStorage.counterStorage {
 		htmlBody.WriteString(fmt.Sprintf("<div>%s: %d</div>\n", k, v))
 	}
+	memStorage.mxCounter.RUnlock()
 	return &htmlBody
 }
 

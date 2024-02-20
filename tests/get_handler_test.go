@@ -105,9 +105,11 @@ func TestGetHandler(t *testing.T) {
 
 			switch {
 			case tt.want.gaugeMetricValue != internal.Gauge(0):
-				assert.Equal(t, tt.want.gaugeMetricValue, memStorage.GetGaugeMetric(tt.want.metricName))
+				metric, _ := memStorage.GetGaugeMetric(tt.want.metricName)
+				assert.Equal(t, tt.want.gaugeMetricValue, metric)
 			case tt.want.counterMetricValue != internal.Counter(0):
-				assert.Equal(t, tt.want.counterMetricValue, memStorage.GetCounterMetric(tt.want.metricName))
+				metric, _ := memStorage.GetCounterMetric(tt.want.metricName)
+				assert.Equal(t, tt.want.counterMetricValue, metric)
 			default:
 
 			}
@@ -182,11 +184,12 @@ func TestGetHandlerAfterPost(t *testing.T) {
 
 			switch {
 			case tt.want.gaugeMetricValue != internal.Gauge(0):
-				assert.Equal(t, tt.want.gaugeMetricValue, memStorage.GetGaugeMetric(tt.want.metricName))
+				metric, _ := memStorage.GetGaugeMetric(tt.want.metricName)
+				assert.Equal(t, tt.want.gaugeMetricValue, metric)
 			case tt.want.counterMetricValue != internal.Counter(0):
-				assert.Equal(t, tt.want.counterMetricValue, memStorage.GetCounterMetric(tt.want.metricName))
+				metric, _ := memStorage.GetCounterMetric(tt.want.metricName)
+				assert.Equal(t, tt.want.counterMetricValue, metric)
 			default:
-
 			}
 		})
 	}

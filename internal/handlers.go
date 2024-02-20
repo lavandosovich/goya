@@ -31,22 +31,26 @@ func RootHandler(w http.ResponseWriter, _ *http.Request, storage *MemStorage) {
 }
 
 func GetHandler(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
-	var metricValue string
+	var (
+		metricValue   string
+		ok            bool
+		counterMetric Counter
+		gaugeMetric   Gauge
+	)
 	metricType := r.
 		Context().
 		Value(MetricType)
 	metricName := chi.URLParam(r, string(MetricName))
-	defaultValues := []string{strconv.Itoa(0), fmt.Sprintf("%f", float64(0))}
 
 	if metricType == "counter" {
-		metricValue = strconv.Itoa(
-			int((*storage).GetCounterMetric(metricName)))
+		counterMetric, ok = storage.GetCounterMetric(metricName)
+		metricValue = strconv.Itoa(int(counterMetric))
 	} else {
+		gaugeMetric, ok = storage.GetGaugeMetric(metricName)
 		metricValue =
-			strconv.FormatFloat(
-				float64((*storage).GetGaugeMetric(metricName)), 'f', -1, 64)
+			strconv.FormatFloat(float64(gaugeMetric), 'f', -1, 64)
 	}
-	if slices.Contains(defaultValues, metricValue) {
+	if !ok {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(""))
 	}
@@ -69,7 +73,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 			w.Write([]byte("wrong type"))
 			return
 		}
-		(*storage).SetCounterMetric(metricName, Counter(value))
+		storage.SetCounterMetric(metricName, Counter(value))
 	} else {
 		s, err := strconv.ParseFloat(metricValue, 64)
 		if err != nil {
@@ -77,7 +81,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 			w.Write([]byte("wrong type"))
 			return
 		}
-		(*storage).SetGaugeMetric(metricName, Gauge(s))
+		storage.SetGaugeMetric(metricName, Gauge(s))
 	}
 	log := fmt.Sprintf("%s %d\n", r.URL.Path, http.StatusAccepted)
 	fmt.Print(log)
