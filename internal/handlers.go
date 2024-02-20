@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 )
 
 func MetricTypeMiddleware(next http.Handler) http.Handler {
@@ -48,7 +49,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 	} else {
 		gaugeMetric, ok = storage.GetGaugeMetric(metricName)
 		metricValue =
-			strconv.FormatFloat(float64(gaugeMetric), 'f', -1, 64)
+			strings.TrimRight(fmt.Sprintf("%f", float64(gaugeMetric)), "0")
 	}
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)

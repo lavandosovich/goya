@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -72,7 +73,7 @@ func TestGetHandler(t *testing.T) {
 			request: "/value/gauge/testUnknown104",
 			want: want{
 				statusCode: http.StatusNotFound,
-				response:   "0",
+				response:   "0.",
 
 				contentType: "text/plain; charset=utf-8",
 			},
@@ -117,7 +118,7 @@ func TestGetHandler(t *testing.T) {
 	}
 }
 
-func TestGetHandlerAfterPost(t *testing.T) {
+func TestGetHandlerWithGaugeAfterPost(t *testing.T) {
 	type want struct {
 		statusCode         int
 		response           string
@@ -153,14 +154,11 @@ func TestGetHandlerAfterPost(t *testing.T) {
 			},
 			want: want{
 				statusCode: http.StatusOK,
-				response:   strconv.FormatFloat(float64(internal.Gauge(1.123)), 'f', -1, 64),
-
-				gaugeMetricValue: internal.Gauge(1.123),
-				metricName:       "nextgc",
 			},
 		},
 	}
 	for _, tt := range tests {
+		var acc = internal.Gauge(0.0)
 		t.Run(tt.name, func(t *testing.T) {
 			memStorage := internal.NewMemStorage()
 
@@ -171,25 +169,77 @@ func TestGetHandlerAfterPost(t *testing.T) {
 				statusCode, _ := testRequest(t, ts, http.MethodPost, reqPath, func(_ *http.Response) {
 				})
 				assert.Equal(t, tt.want.statusCode, statusCode)
+				reqPathArr := strings.Split(reqPath, "/")
+
+				g, _ := strconv.ParseFloat(reqPathArr[len(reqPathArr)-1], 64)
+				acc += internal.Gauge(g)
+
+				statusCode, body := testRequest(t, ts, http.MethodGet, tt.request, func(_ *http.Response) {
+				})
+				assert.Equal(t, tt.want.statusCode, statusCode)
+				assert.Equal(t, strings.TrimRight(fmt.Sprintf("%f", acc), "0"), body)
 			}
+		})
+	}
+}
 
-			statusCode, body := testRequest(t, ts, http.MethodGet, tt.request, func(_ *http.Response) {
-			})
-			assert.Equal(t, tt.want.statusCode, statusCode)
-			assert.Equal(t, tt.want.response, body)
+func TestGetHandlerWithCounterAfterPost(t *testing.T) {
+	type want struct {
+		statusCode         int
+		response           string
+		gaugeMetricValue   internal.Gauge
+		counterMetricValue internal.Counter
+		metricName         string
+	}
+	tests := []struct {
+		name        string
+		want        want
+		request     string
+		postRequest []string
+	}{
+		{
+			name:        "TestIteration3b/TestCounter/update_sequence",
+			request:     "/value/counter/nextgc",
+			postRequest: []string{"/update/counter/nextgc/124124"},
+			want: want{
+				statusCode: http.StatusOK,
+				metricName: "nextgc",
+			},
+		},
+		{
+			name:    "TestIteration3b/TestCounter/update_sequence",
+			request: "/value/counter/nextgc",
+			postRequest: []string{
+				"/update/counter/nextgc/124124",
+				"/update/counter/nextgc/1242323124",
+				"/update/counter/nextgc/1",
+			},
+			want: want{
+				statusCode: http.StatusOK,
+			},
+		},
+	}
+	for _, tt := range tests {
+		var acc = internal.Counter(0)
+		t.Run(tt.name, func(t *testing.T) {
+			memStorage := internal.NewMemStorage()
 
-			//request := httptest.NewRequest(http.MethodPost, tt.request, nil)
-			// создаём новый Recorder
-			//w := httptest.NewRecorder()
+			ts := httptest.NewServer(internal.InitChiRouter(memStorage))
+			defer ts.Close()
 
-			switch {
-			case tt.want.gaugeMetricValue != internal.Gauge(0):
-				metric, _ := memStorage.GetGaugeMetric(tt.want.metricName)
-				assert.Equal(t, tt.want.gaugeMetricValue, metric)
-			case tt.want.counterMetricValue != internal.Counter(0):
-				metric, _ := memStorage.GetCounterMetric(tt.want.metricName)
-				assert.Equal(t, tt.want.counterMetricValue, metric)
-			default:
+			for _, reqPath := range tt.postRequest {
+				statusCode, _ := testRequest(t, ts, http.MethodPost, reqPath, func(_ *http.Response) {
+				})
+				assert.Equal(t, tt.want.statusCode, statusCode)
+				reqPathArr := strings.Split(reqPath, "/")
+
+				g, _ := strconv.ParseInt(reqPathArr[len(reqPathArr)-1], 10, 64)
+				acc += internal.Counter(g)
+
+				statusCode, body := testRequest(t, ts, http.MethodGet, tt.request, func(_ *http.Response) {
+				})
+				assert.Equal(t, tt.want.statusCode, statusCode)
+				assert.Equal(t, fmt.Sprintf("%d", acc), body)
 			}
 		})
 	}

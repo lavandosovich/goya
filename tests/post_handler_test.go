@@ -118,7 +118,6 @@ func TestPostHandler(t *testing.T) {
 			})
 			assert.Equal(t, tt.want.statusCode, statusCode)
 			assert.Equal(t, tt.want.response, body)
-
 			//request := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			// создаём новый Recorder
 			//w := httptest.NewRecorder()
