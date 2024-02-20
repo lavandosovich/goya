@@ -28,9 +28,9 @@ func TestGetHandler(t *testing.T) {
 			request: "/value/gauge/nextgc",
 			want: want{
 				statusCode:       http.StatusOK,
-				response:         fmt.Sprintf("%f", internal.Gauge(124124)),
+				response:         fmt.Sprintf("%.3f", internal.Gauge(124124.123333)),
 				contentType:      "text/plain; charset=utf-8",
-				gaugeMetricValue: internal.Gauge(124124),
+				gaugeMetricValue: internal.Gauge(124124.123333),
 				metricName:       "nextgc",
 			},
 		},
@@ -83,6 +83,83 @@ func TestGetHandler(t *testing.T) {
 
 			statusCode, body := testRequest(t, ts, http.MethodGet, tt.request, func(response *http.Response) {
 				assert.Equal(t, response.Header.Get("Content-Type"), tt.want.contentType)
+			})
+			assert.Equal(t, tt.want.statusCode, statusCode)
+			assert.Equal(t, tt.want.response, body)
+
+			//request := httptest.NewRequest(http.MethodPost, tt.request, nil)
+			// создаём новый Recorder
+			//w := httptest.NewRecorder()
+
+			switch {
+			case tt.want.gaugeMetricValue != internal.Gauge(0):
+				assert.Equal(t, tt.want.gaugeMetricValue, memStorage.GetGaugeMetric(tt.want.metricName))
+			case tt.want.counterMetricValue != internal.Counter(0):
+				assert.Equal(t, tt.want.counterMetricValue, memStorage.GetCounterMetric(tt.want.metricName))
+			default:
+
+			}
+		})
+	}
+}
+
+func TestGetHandlerAfterPost(t *testing.T) {
+	type want struct {
+		statusCode         int
+		response           string
+		gaugeMetricValue   internal.Gauge
+		counterMetricValue internal.Counter
+		metricName         string
+	}
+	tests := []struct {
+		name        string
+		want        want
+		request     string
+		postRequest []string
+	}{
+		{
+			name:        "TestIteration3b/TestCounter/update_sequence",
+			request:     "/value/gauge/nextgc",
+			postRequest: []string{"/update/gauge/nextgc/124124.123"},
+			want: want{
+				statusCode:       http.StatusOK,
+				response:         fmt.Sprintf("%.3f", internal.Gauge(124124.123)),
+				gaugeMetricValue: internal.Gauge(124124.123),
+				metricName:       "nextgc",
+			},
+		},
+		{
+			name:    "TestIteration3b/TestCounter/update_sequence",
+			request: "/value/gauge/nextgc",
+			postRequest: []string{
+				"/update/gauge/nextgc/124124.123",
+				"/update/gauge/nextgc/1242323124.123",
+				"/update/gauge/nextgc/1.123",
+			},
+			want: want{
+				statusCode:       http.StatusOK,
+				response:         fmt.Sprintf("%.3f", internal.Gauge(1.123)),
+				gaugeMetricValue: internal.Gauge(1.123),
+				metricName:       "nextgc",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			memStorage := internal.NewMemStorage()
+
+			ts := httptest.NewServer(internal.InitChiRouter(memStorage))
+			defer ts.Close()
+
+			for _, reqPath := range tt.postRequest {
+				statusCode, _ := testRequest(t, ts, http.MethodPost, reqPath, func(_ *http.Response) {
+					return
+				})
+				assert.Equal(t, tt.want.statusCode, statusCode)
+			}
+
+			statusCode, body := testRequest(t, ts, http.MethodGet, tt.request, func(_ *http.Response) {
+				return
 			})
 			assert.Equal(t, tt.want.statusCode, statusCode)
 			assert.Equal(t, tt.want.response, body)

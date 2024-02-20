@@ -43,7 +43,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request, storage *MemStorage) {
 			int((*storage).GetCounterMetric(metricName)))
 	} else {
 		metricValue = fmt.Sprintf(
-			"%f", float64((*storage).GetGaugeMetric(metricName)))
+			"%.3f", float64((*storage).GetGaugeMetric(metricName)))
 	}
 	if slices.Contains(defaultValues, metricValue) {
 		w.WriteHeader(http.StatusNotFound)
