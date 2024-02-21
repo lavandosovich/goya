@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"runtime"
+	"sync"
 	"time"
 )
 
@@ -52,15 +53,20 @@ func PollMetrics(pollDuration, reportDuration time.Duration, reporterFunc Metric
 	startTime := time.Now()
 	var pollCount Counter = 0
 	var neededMetrics *Metrics
+	var mutex sync.RWMutex
 
 	go func() {
 		for {
 			tick := <-reportTicker.C
+
+			mutex.RLock()
 			if neededMetrics == nil {
 				continue
 			}
-			errors := reporterFunc(neededMetrics, address)
+			metrics := *neededMetrics
+			mutex.RUnlock()
 
+			errors := reporterFunc(metrics, address)
 			if errors != nil {
 				fmt.Println(errors)
 				panic("error on reporting metrics")
@@ -69,11 +75,12 @@ func PollMetrics(pollDuration, reportDuration time.Duration, reporterFunc Metric
 			fmt.Println("From goroutine", int(tick.Sub(startTime).Seconds()))
 		}
 	}()
-
-	for i := 0; ; i++ {
+	for {
 		tick := <-pollTicker.C
 		pollCount += 1
+		mutex.Lock()
 		neededMetrics = GetMetrics(pollCount)
+		mutex.Unlock()
 		fmt.Println(int(tick.Sub(startTime).Seconds()))
 	}
 }

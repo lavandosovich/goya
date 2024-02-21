@@ -70,7 +70,7 @@ type IMemStorage interface {
 	ReduceMetricsToHtml() string
 }
 
-type MetricsReporter func(metrics *Metrics, address string) []error
+type MetricsReporter func(metrics Metrics, address string) []error
 
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
