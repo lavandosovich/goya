@@ -51,7 +51,7 @@ func PollMetrics(pollDuration, reportDuration time.Duration, reporterFunc Metric
 	pollTicker := time.NewTicker(pollDuration)
 	reportTicker := time.NewTicker(reportDuration)
 	startTime := time.Now()
-	var pollCount Counter = 0
+	var pollCount Counter
 	var neededMetrics *Metrics
 	var mutex sync.RWMutex
 
@@ -77,7 +77,7 @@ func PollMetrics(pollDuration, reportDuration time.Duration, reporterFunc Metric
 	}()
 	for {
 		tick := <-pollTicker.C
-		pollCount += 1
+		pollCount++
 		mutex.Lock()
 		neededMetrics = GetMetrics(pollCount)
 		mutex.Unlock()
